@@ -1,6 +1,19 @@
-import socket, os, traceback
+import socket, os, sys, traceback
+from importlib import *
+
+path = "./libs"
+sys.path.append(path)
+for m in os.walk(path):
+    for e in m:
+        for a in e:
+            if len(a) > 1 and a[-3:] == ".py":
+                name = a.split(".")[0]
+                print("["+name+"] is loaded")
+                globals().update({name:import_module(name)})
+invalidate_caches()
 class WebServer():
     def __init__(self, ip, port, max_clients=None):
+        checker.check("./Folder/index.html")
         self.ip = ip
         self.port = port
         self.max_clients = max_clients
@@ -15,7 +28,6 @@ class WebServer():
     def listen(self):
         conn, addr = self.server.accept()
         data = conn.recv(1024).decode()
-        print(addr, data)
         try: 
             for i, l in enumerate(data.split("\n")):
                 if i == 0:
@@ -26,7 +38,6 @@ class WebServer():
                     else:   
                         requestPath = l.split(" ")[1]
                         if ".." in requestPath:
-                            print("Hack attempt from",addr)
                             conn.send(b"HTTP/1.1 404 Not Found\n")
                         elif os.path.exists("."+requestPath):
                             for h in self.html:
