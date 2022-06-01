@@ -3,17 +3,21 @@ from importlib import *
 
 path = "./libs"
 sys.path.append(path)
-for m in os.walk(path):
-    for e in m:
-        for a in e:
-            if len(a) > 1 and a[-3:] == ".py":
-                name = a.split(".")[0]
-                print("["+name+"] is loaded")
-                globals().update({name:import_module(name)})
-invalidate_caches()
+def load_libs(path):
+    for m in os.walk(path):
+        for e in m:
+            for a in e:
+                if len(a) > 1 and a[-3:] == ".py":
+                    name = a.split(".")[0]
+                    if name not in globals():
+                        globals().update({name:import_module(name)})
+                        print("[NEW] "+name)
+                    else:
+                        print("[UPDATE] "+name)
+    invalidate_caches()
 class WebServer():
     def __init__(self, ip, port, max_clients=None):
-        checker.check("./Folder/index.html")
+        load_libs("./libs")
         self.ip = ip
         self.port = port
         self.max_clients = max_clients
@@ -43,12 +47,13 @@ class WebServer():
                             for h in self.html:
                                 if(h.path == "."+requestPath):
                                     f = open("."+requestPath, "r")
-                                    toSend = f.read().encode("UTF-8")
+                                    toSend = f.read()
+                                    final = checker.check(toSend).encode("UTF-8")
                                     f.close()
                                     conn.send(b"HTTP/1.1 200 OK\n"
                                     +b'Content-Type: text/html\n'
                                     +b"\n"
-                                    +bytes(toSend))
+                                    +bytes(final))
                         else:
                             conn.send(b"HTTP/1.1 404 Not Found\n")
             conn.close()
